@@ -1,0 +1,90 @@
+{
+  "project_name": "Arshia's Cinematic Birthday Experience",
+  "theme": "light",
+  "typography": {
+    "headings": "Playfair Display",
+    "body": "Outfit",
+    "accent": "Dancing Script",
+    "guidelines": "Serif (Playfair) for premium cinematic titles. Sans-serif (Outfit) for all highly readable body text and UI controls. Handwritten (Dancing Script) for emotional, personal accents and notes. Use tracking-tight on massive text, tracking-wide on tiny overlines. Never use Inter or Space Grotesk."
+  },
+  "colors": {
+    "primary_pastel_pink": "#FFD1DC",
+    "primary_lavender": "#E6E6FA",
+    "primary_peach": "#FFCBA4",
+    "accent_rose_gold": "#B76E79",
+    "accent_soft_purple": "#D8BFD8",
+    "accent_sky_blue": "#87CEEB",
+    "bg_warm_white": "#FDFBF7",
+    "bg_light_cream": "#FFFDD0",
+    "text_dark": "#2D2A26",
+    "text_muted": "#595550",
+    "glass_bg": "rgba(255, 255, 255, 0.45)",
+    "glass_border": "rgba(255, 255, 255, 0.65)",
+    "glass_shadow": "0 8px 32px 0 rgba(183, 110, 121, 0.1)",
+    "aurora_gradient": "linear-gradient(135deg, rgba(255,209,220,0.4) 0%, rgba(230,230,250,0.4) 50%, rgba(255,203,164,0.4) 100%)"
+  },
+  "visual_enhancers": {
+    "glassmorphism": "Ultra-premium glass styling: backdrop-blur-xl or 2xl, subtle 1px white/60 border, inner white glow, ambient colored drop shadow. NEVER use plain transparent backgrounds for UI components.",
+    "living_background": "Implement floating particles (fireflies, sparkles, petals) globally using framer-motion or tsparticles. Background should shift dynamically like an aurora.",
+    "shapes": "Use soft, organic, asymmetrical shapes. Section dividers should be SVG curves, clouds, or waves-not straight horizontal lines.",
+    "cursor": "Custom glowing cursor trailing particles (framer-motion coordinates). Hide default cursor."
+  },
+  "layouts": {
+    "1_Intro_Curtain": "Fixed absolute full-screen z-[100]. Black background. 2 image panels of red velvet curtains meeting in middle. Curtains slide left/right on trigger.",
+    "2_DOB_Lock": "Center glassmorphic card (max-w-md). 'Enter your birthday' prompt. Input field. Password is '01012000'. Shake animation (x: [-10,10,-10,10,0]) on fail. Success triggers bright glow and fade out.",
+    "3_Name_Reveal": "Cinematic text sequence. Huge glassy 'A' appears first, light sweep across it. Letters 'R S H I A' slide out from inside 'A'. Word dissolves into floating particles transitioning to Hero.",
+    "4_Hero": "min-h-screen with soft aurora gradient. Large 'Happy Birthday, Kiddo!' heading. Floating Hero Photo ('pink dress') in a premium glass frame. Floating balloons/butterflies behind. Scroll indicator pulsing.",
+    "5_The_Story": "Vertical timeline. Central glowing line (rose gold). 5 glassmorphic cards alternating left and right. Parallax scroll effect for each card.",
+    "6_Photo_Gallery": "Interactive scrapbook layout. Do NOT use a grid. Staggered, rotated polaroids floating in 2D space. Hover brings photo to top and scales. Click opens lightbox.",
+    "7_Moving_Memories": "Horizontal scrolling film-strip / cinema reel. Autoplaying looping videos or photo slideshow. Glassy film-strip borders.",
+    "8_Memory_Jar": "Large glass jar image centered. Floating particles inside. Click jar -> A folded paper rises, unfolds, and typewriter animation reveals a core memory. Counter updates.",
+    "9_Letters_Mood": "6 premium wax-sealed envelopes in a 3x2 grid. Hover: Envelope lifts. Click: Flap opens (rotateX 180), paper slides up, typewriter text appears.",
+    "10_Secret_Letter": "Single central vintage paper element. Wax seal in center. Typewriter text slowly reveals when scrolled into view.",
+    "11_Wheel_Surprises": "Circular SVG wheel with 10 pastel segments. Central glass spin button. Realistic physics-based spin using Framer Motion. Popup glass card reveals the result.",
+    "12_Birthday_Wish": "3D-ish Cake image with glowing candles. Button 'Make a Wish'. Click triggers candle fade, room lights up, massive confetti explosion using react-confetti.",
+    "13_Compliments": "Single glass card in center. Click triggers 3D flip (rotateY 180). New compliment displayed on the other side.",
+    "14_Best_Friend_Meter": "Animated SVG gauge or horizontal liquid bar. Starts at 0%, races to 99%, stalls, hits 100% and triggers fireworks.",
+    "15_Music_Player": "Floating glass widget bottom-right. Play/pause icons. Spinning vinyl animation.",
+    "16_Outro": "Full-screen emotional thank you note. Soft pastel firework background. 'Happy Birthday Arshia'."
+  },
+  "motion": {
+    "scroll": "Lenis smooth scroll is MANDATORY for premium momentum feel.",
+    "animations": "Framer Motion for all interactions. Use spring physics ({ type: 'spring', stiffness: 100, damping: 20 }). Staggered list reveals and parallax essential.",
+    "framerate": "Optimize particle animations to maintain 60fps."
+  },
+  "image_urls": {
+    "hero_photo": "https://customer-assets-jt897jd0.emergentagent.net/job_4edc794c-aa20-419e-9496-fc058a446f36/artifacts/r72lypd6_Screenshot_2026-07-03-17-01-51-92_801c3494cc30bc6d615367769f98046d.jpg",
+    "gallery_photos": [
+      "https://customer-assets-jt897jd0.emergentagent.net/job_4edc794c-aa20-419e-9496-fc058a446f36/artifacts/b1t6oy42_Screenshot_2026-07-03-17-01-10-13_801c3494cc30bc6d615367769f98046d.jpg",
+      "https://customer-assets-jt897jd0.emergentagent.net/job_4edc794c-aa20-419e-9496-fc058a446f36/artifacts/chxkx1f4_Screenshot_2026-07-03-17-01-31-91_801c3494cc30bc6d615367769f98046d.jpg",
+      "https://customer-assets-jt897jd0.emergentagent.net/job_4edc794c-aa20-419e-9496-fc058a446f36/artifacts/8h2bum8o_Screenshot_2026-07-03-17-02-03-88_801c3494cc30bc6d615367769f98046d.jpg",
+      "https://customer-assets-jt897jd0.emergentagent.net/job_4edc794c-aa20-419e-9496-fc058a446f36/artifacts/m7j6k8qr_Screenshot_2026-07-04-23-26-31-93_99c04817c0de5652397fc8b56c3b3817.jpg"
+    ],
+    "curtain": "https://images.unsplash.com/photo-1514306191717-452ec28c7814?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwxfHx0aGVhdHJlJTIwc3RhZ2UlMjB2ZWx2ZXQlMjBjdXJ0YWluc3xlbnwwfHx8fDE3ODM5NTczODh8MA&ixlib=rb-4.1.0&q=85",
+    "jar": "https://images.pexels.com/photos/701336/pexels-photo-701336.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "envelope": "https://images.pexels.com/photos/11385654/pexels-photo-11385654.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "cake": "https://images.pexels.com/photos/30401226/pexels-photo-30401226.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "aurora_cloud_bg": "https://images.unsplash.com/photo-1626630317382-16dffa6362eb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwyfHxhZXN0aGV0aWMlMjBwYXN0ZWwlMjBza3klMjBhdXJvcmElMjBjbG91ZHN8ZW58MHx8fHwxNzgzMDc0NTEzfDA&ixlib=rb-4.1.0&q=85"
+  },
+  "component_path": {
+    "ui_components": "/app/frontend/src/components/ui/",
+    "sections": "/app/frontend/src/components/sections/"
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: framer-motion, lucide-react, react-confetti, tsparticles, react-tsparticles, @studio-freight/react-lenis.",
+    "Implement a robust global state or Context for the 'Unlock' and 'Cinematic Intro' sequence so the rest of the page does not render or scroll until unlocked.",
+    "DO NOT use generic Shadcn components out of the box-strip their default borders/bg and apply the custom glassmorphism classes.",
+    "Ensure the custom cursor and floating background elements do not interfere with pointer events (use pointer-events: none).",
+    "Apply `data-testid` to the password input, unlock button, memory jar, envelopes, spin wheel, and cake for testing.",
+    "All text over images or gradients must use text-shadow for WCAG contrast.",
+    "Avoid straight line dividers. Use custom SVG paths for waves, clouds, or jagged scrapbook tears between sections."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "DO NOT output generic 'AI slop' designs. Add layered depth and subtle noise/grain overlays to create the 'handcrafted premium' feel.",
+    "Never apply `transition: all` as it ruins Framer Motion transforms.",
+    "Do not add `.App { text-align: center; }`. Keep text naturally aligned unless explicitly requested.",
+    "Use glassmorphism (backdrop-blur-xl, white/40 border, slight white/20 bg) for all containers instead of flat colored blocks.",
+    "Include high-fidelity micro-interactions (e.g., hover scaling, soft glows) on all interactive elements.",
+    "Prioritize optical alignment over strict geometric alignment for visual perfection."
+  ]
+}
