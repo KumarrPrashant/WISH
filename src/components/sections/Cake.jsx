@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { BIRTHDAY_WISH } from "../../data";
 import { Header } from "./Story";
+import { useCursorPos } from "../../hooks/useCursorPos";
 
 const SPARK_COLORS = ["#f5c451", "#ffffff", "#f9a8d4", "#c4b5fd", "#ffcaa4", "#a4d4fc"];
 

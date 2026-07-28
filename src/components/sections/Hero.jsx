@@ -14,7 +14,7 @@ function HangingPhoto({ src, caption, delay, swing }) {
         style={{ transformOrigin: "top center" }}>
         <div className="w-[2px] h-10" style={{ background: "linear-gradient(rgba(245,196,81,0.8),rgba(245,196,81,0.3))" }} />
         <motion.div className="glass p-2.5 pb-8 rounded-2xl" whileHover={{ scale: 1.06, boxShadow: "0 24px 60px rgba(236,72,153,0.4)" }}>
-          <img src={src} alt={caption} className="w-32 sm:w-40 md:w-44 h-40 sm:h-48 md:h-56 object-cover rounded-lg" />
+          <img src={src} alt={caption} loading="lazy" decoding="async" className="w-32 sm:w-40 md:w-44 h-40 sm:h-48 md:h-56 object-cover rounded-lg" />
           <p className="font-hand text-lg text-center text-[#f5c451] mt-1">{caption}</p>
         </motion.div>
       </motion.div>

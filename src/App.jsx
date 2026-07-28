@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Lenis from "lenis";
 import "@/App.css";
 import Intro from "@/components/Intro";
@@ -23,7 +23,7 @@ function App() {
   const lenisRef = useRef(null);
 
   // start music exactly once, when ARSHIA intro appears
-  const startMusic = () => {
+  const startMusic = useCallback(() => {
     if (startedRef.current || !audioRef.current) return;
     startedRef.current = true;
     const a = audioRef.current;
@@ -32,7 +32,9 @@ function App() {
       let v = 0;
       const id = setInterval(() => { v += 0.02; if (v >= 0.7) { v = 0.7; clearInterval(id); } a.volume = v; }, 120);
     }).catch(() => {});
-  };
+  }, []);
+
+  const handleUnlock = useCallback(() => setUnlocked(true), []);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -48,7 +50,7 @@ function App() {
     <div className="App grain">
       <audio ref={audioRef} src={ASSETS.music} loop preload="auto" />
 
-      {!unlocked && <Intro onUnlock={() => setUnlocked(true)} onMusicStart={startMusic} />}
+      {!unlocked && <Intro onUnlock={handleUnlock} onMusicStart={startMusic} />}
 
       {unlocked && (
         <>

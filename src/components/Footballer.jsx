@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 
 /* Stylized animated footballer (Messi-inspired) — SVG character with idle + kick */
-export function Footballer({ kicking }) {
+export const Footballer = memo(function Footballer({ kicking }) {
   return (
     <div className="relative w-[220px] h-[300px] select-none" data-testid="footballer">
       {/* soft ground shadow */}
@@ -78,4 +79,4 @@ export function Footballer({ kicking }) {
       </motion.svg>
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { ASSETS } from "../../data";
 import { Header } from "./Story";
@@ -12,7 +12,7 @@ const SHAPES = [
   { name: "petal", radius: "45% 45% 45% 45% / 55% 55% 45% 45%" },
 ];
 
-function HangingFrame({ v, i, threadLen, swing, show }) {
+const HangingFrame = memo(function HangingFrame({ v, i, threadLen, swing, show }) {
   const shape = SHAPES[i % SHAPES.length];
   return (
     <motion.div className="relative flex flex-col items-center flex-shrink-0"
@@ -32,7 +32,7 @@ function HangingFrame({ v, i, threadLen, swing, show }) {
       </motion.div>
     </motion.div>
   );
-}
+});
 
 export default function Videos({ lenisRef }) {
   const sentinel = useRef(null);

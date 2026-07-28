@@ -25,7 +25,7 @@ export default function Gallery() {
               transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut" }}
               whileHover={{ scale: 1.07, rotate: 0, zIndex: 20, boxShadow: "0 24px 60px rgba(236,72,153,0.4)" }}
               onClick={() => setActive(p.src)}>
-              <img src={p.src} alt={p.caption} className="w-44 sm:w-52 h-60 sm:h-72 object-cover rounded-lg" />
+              <img src={p.src} alt={p.caption} loading="lazy" decoding="async" className="w-44 sm:w-52 h-60 sm:h-72 object-cover rounded-lg" />
               <p className="font-hand text-xl text-center text-[#f5c451] absolute bottom-2 left-0 right-0">{p.caption}</p>
             </motion.div>
           </motion.div>

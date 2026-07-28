@@ -1,5 +1,6 @@
 import { useRef, useMemo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCursorPos } from "../../hooks/useCursorPos";
 
 const PLANET_COLORS = ["#f9a8d4", "#c4b5fd", "#fcd6a4", "#a4d4fc", "#fcb4c4"];
 const SPARK_COLORS = ["#f5c451", "#ffffff", "#f9a8d4", "#c4b5fd"];

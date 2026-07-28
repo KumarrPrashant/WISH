@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MEMORIES } from "../../data";
 import { ParticleBurst } from "../Ambience";
 import { Header } from "./Story";
+import { useCursorPos } from "../../hooks/useCursorPos";
 
 const SPARK_COLORS = ["#f5c451", "#ffffff", "#f9a8d4", "#c4b5fd"];
 
@@ -15,6 +16,7 @@ function CrystalTypewriter({ text }) {
   const wrapRef = useRef(null);
   const cursorRef = useRef(null);
   const pid = useRef(0);
+  const { getPos, observe } = useCursorPos(wrapRef, cursorRef);
 
   useEffect(() => {
     setShown("");
@@ -32,18 +34,15 @@ function CrystalTypewriter({ text }) {
         setTyping(false);
       }
     }, 6);
-    return () => clearInterval(id);
+    const cleanupRO = observe();
+    return () => { clearInterval(id); cleanupRO && cleanupRO(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
   const emitSparkle = () => {
-    const wrap = wrapRef.current;
-    const cur = cursorRef.current;
-    if (!wrap || !cur) return;
-    const wr = wrap.getBoundingClientRect();
-    const cr = cur.getBoundingClientRect();
-    const x = cr.left - wr.left + cr.width / 2;
-    const y = cr.top - wr.top + cr.height / 2;
+    const pos = getPos();
+    if (!pos) return;
+    const { x, y } = pos;
 
     const id = pid.current++;
     const color = SPARK_COLORS[id % SPARK_COLORS.length];

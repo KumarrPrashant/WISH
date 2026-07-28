@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Heart, Sparkles, Calendar } from "lucide-react";
 import { PASSWORD } from "../data";

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ASSETS } from "../data";
-import LazyVideo from "./LazyVideo";
 
 function rand(min, max) {
   return Math.random() * (max - min) + min;
@@ -85,23 +84,22 @@ export function LivingBackground({ dense = true }) {
 }
 
 /* ---------------- Cinematic media flow (row-based motion tracks) ---------------- */
+/* Videos in the background flow use poster frames (first frame) instead of
+   live playback — they're blurred decorative elements, so full video
+   playback here wastes GPU/memory and competes with the main Videos section. */
 function Track({ items, y, dur, direction = 1, diagonal = false, size = 190, blur = 3, op = 0.3 }) {
   const doubled = [...items, ...items];
   return (
     <motion.div
       className="absolute flex gap-10"
-      style={{ top: `${y}%`, left: 0, filter: `blur(${blur}px)`, opacity: op }}
+      style={{ top: `${y}%`, left: 0, filter: `blur(${blur}px)`, opacity: op, willChange: "transform" }}
       animate={{ x: direction > 0 ? ["-50%", "0%"] : ["0%", "-50%"], y: diagonal ? [0, -40, 0] : 0 }}
       transition={{ x: { duration: dur, repeat: Infinity, ease: "linear" }, y: { duration: dur / 2, repeat: Infinity, ease: "easeInOut" } }}
     >
       {doubled.map((m, i) => (
         <div key={i} className="rounded-2xl overflow-hidden flex-shrink-0 bg-black/20"
           style={{ width: size, transform: `rotate(${diagonal ? (i % 2 ? 6 : -6) : 0}deg)`, boxShadow: "0 20px 60px rgba(0,0,0,0.45)" }}>
-          {m.type === "img" ? (
-            <img src={m.src} alt="" className="w-full h-44 object-cover" style={{ objectPosition: m.objectPos || "center 25%" }} loading="lazy" />
-          ) : (
-            <LazyVideo src={m.src} className="w-full h-48" />
-          )}
+          <img src={m.src} alt="" loading="lazy" decoding="async" className="w-full h-44 object-cover" style={{ objectPosition: m.objectPos || "center 25%" }} />
         </div>
       ))}
     </motion.div>
@@ -109,11 +107,12 @@ function Track({ items, y, dur, direction = 1, diagonal = false, size = 190, blu
 }
 
 export function MediaFlow() {
+  // Use only photos for the background flow — videos here are decorative
+  // and blurred, so playing them wastes resources. Photos look identical
+  // at blur(3-5px) opacity 0.2-0.26 and cost zero video decode overhead.
   const imgs = ASSETS.photos.map((p) => ({ type: "img", src: p.src, objectPos: p.objectPos }));
-  const vids = ASSETS.videos.map((v) => ({ type: "video", src: v.src }));
-  // balanced, all photos used; limit simultaneous videos for smooth playback
-  const row1 = [imgs[0], imgs[2], imgs[4], vids[0]];
-  const row2 = [imgs[1], imgs[3], imgs[0], vids[1]];
+  const row1 = [imgs[0], imgs[2], imgs[4], imgs[1]];
+  const row2 = [imgs[1], imgs[3], imgs[0], imgs[2]];
   const row3 = [imgs[2], imgs[4], imgs[1], imgs[3]];
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
