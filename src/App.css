@@ -1,0 +1,15 @@
+.App {
+  min-height: 100vh;
+  position: relative;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  height: 8px;
+}
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  background: rgba(183, 110, 121, 0.3);
+  border-radius: 10px;
+}
+
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
