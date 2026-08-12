@@ -59,9 +59,9 @@ const Butterfly = memo(function Butterfly({ size = 120, colors = PALETTE[0], fla
   - Calls onDone exactly once when the zoom completes
 */
 const FLYERS = [
-  { colors: PALETTE[0], size: 130, startY: 24, fromLeft: true,  dur: 1.7, delay: 0,    wobble: 60 },
-  { colors: PALETTE[1], size: 150, startY: 62, fromLeft: false, dur: 1.8, delay: 0.25, wobble: 80 },
-  { colors: PALETTE[2], size: 120, startY: 44, fromLeft: true,  dur: 1.7, delay: 0.55, wobble: 70 },
+  { colors: PALETTE[0], size: 130, startY: 24, fromLeft: true,  dur: 1.52, delay: 0,    wobble: 60 },
+  { colors: PALETTE[1], size: 150, startY: 62, fromLeft: false, dur: 1.61, delay: 0.22, wobble: 80 },
+  { colors: PALETTE[2], size: 120, startY: 44, fromLeft: true,  dur: 1.52, delay: 0.49, wobble: 70 },
 ];
 
 // Natural easing: slow start, graceful middle, gentle settle
@@ -84,7 +84,7 @@ export function ButterflyTransition({ onDone }) {
   // Fire onDone slightly before the zoom completes so videos begin
   // fading in while the glow bloom is still visible — seamless overlap.
   useEffect(() => {
-    timerRef.current = setTimeout(fireDone, 2000);
+    timerRef.current = setTimeout(fireDone, 1780);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [fireDone]);
 
@@ -138,8 +138,8 @@ export function ButterflyTransition({ onDone }) {
         initial={{ scale: 0.2, opacity: 0 }}
         animate={{ scale: [0.2, 1.1, 22], opacity: [0, 1, 1] }}
         transition={{
-          duration: 1.5,
-          delay: 1.0,
+          duration: 1.34,
+          delay: 0.89,
           times: [0, 0.4, 1],
           ease: EASE_ZOOM,
         }}
@@ -157,8 +157,8 @@ export function ButterflyTransition({ onDone }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: [0, 0, 0.85, 0] }}
         transition={{
-          duration: 1.5,
-          delay: 1.0,
+          duration: 1.34,
+          delay: 0.89,
           times: [0, 0.4, 0.7, 1],
           ease: "easeInOut",
         }}

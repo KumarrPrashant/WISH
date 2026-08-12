@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { TIMELINE } from "../../data";
 
@@ -15,9 +16,22 @@ function Header({ title, subtitle, emoji }) {
 }
 export { Header };
 
-export default function Story() {
+export default function Story({ onStoryEnter }) {
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || !onStoryEnter) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) { onStoryEnter(); io.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [onStoryEnter]);
+
   return (
-    <section className="relative py-24 px-6" data-testid="story-section">
+    <section ref={sectionRef} className="relative py-24 px-6" data-testid="story-section">
       <Header emoji="📖" title="The Story" subtitle="Every beautiful friendship has its own little timeline." />
       <div className="relative max-w-4xl mx-auto">
         <motion.div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-[3px] md:-translate-x-1/2 origin-top rounded-full"

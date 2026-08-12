@@ -18,6 +18,7 @@ import Finale from "@/components/sections/Finale";
 
 function App() {
   const [unlocked, setUnlocked] = useState(false);
+  const [storyEntered, setStoryEntered] = useState(false);
   const audioRef = useRef(null);
   const startedRef = useRef(false);
   const lenisRef = useRef(null);
@@ -35,6 +36,7 @@ function App() {
   }, []);
 
   const handleUnlock = useCallback(() => setUnlocked(true), []);
+  const handleStoryEnter = useCallback(() => setStoryEntered(true), []);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -61,9 +63,9 @@ function App() {
             <Divider />
             <Gallery />
             <Divider flip />
-            <Story />
+            <Story onStoryEnter={handleStoryEnter} />
             <Divider />
-            <Videos lenisRef={lenisRef} />
+            <Videos lenisRef={lenisRef} storyEntered={storyEntered} />
             <Divider flip />
             <Reasons />
             <Divider />

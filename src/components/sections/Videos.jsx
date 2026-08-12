@@ -34,14 +34,14 @@ const HangingFrame = memo(function HangingFrame({ v, i, threadLen, swing, show }
   );
 });
 
-export default function Videos({ lenisRef }) {
+export default function Videos({ lenisRef, storyEntered }) {
   const sentinel = useRef(null);
   const inView = useInView(sentinel, { once: true, amount: 0.15 });
   const [revealed, setRevealed] = useState(false);
   const [showBT, setShowBT] = useState(false);
   const originalDuration = useRef(1.3);
 
-  // Preload all videos the moment the sentinel enters the viewport
+  // Preload all videos when the Videos section approaches
   useEffect(() => {
     if (!inView) return;
     ASSETS.videos.forEach((v) => {
@@ -54,9 +54,10 @@ export default function Videos({ lenisRef }) {
     });
   }, [inView]);
 
-  // Trigger butterfly transition + slow scroll when user approaches
+  // Trigger butterfly transition as soon as the Story section enters view,
+  // so butterflies are already flying as the user scrolls toward us.
   useEffect(() => {
-    if (!inView || showBT || revealed) return;
+    if (!storyEntered || showBT || revealed) return;
 
     // Gentle slow-down for cinematic feel
     if (lenisRef && lenisRef.current) {
@@ -65,7 +66,7 @@ export default function Videos({ lenisRef }) {
     }
 
     setShowBT(true);
-  }, [inView, showBT, revealed, lenisRef]);
+  }, [storyEntered, showBT, revealed, lenisRef]);
 
   // Reveal videos as the butterflies complete — fires ~2s in,
   // overlapping the glow bloom for a seamless handoff
