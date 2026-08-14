@@ -61,7 +61,7 @@ function WishTypewriter({ text }) {
   return (
     <div ref={wrapRef} className="relative inline-block">
       <span
-        className="font-serif-display text-xl md:text-2xl leading-[1.05] whitespace-pre-line tracking-wide typing-flow"
+        className="font-serif-display italic font-medium text-xl md:text-2xl leading-[1.05] whitespace-pre-line tracking-wide typing-flow"
         style={{ color: "#f0e6d2", textShadow: "0 0 18px rgba(245,196,81,0.35), 0 2px 8px rgba(0,0,0,0.4)" }}
       >
         {shown}
