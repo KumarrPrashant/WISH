@@ -132,6 +132,27 @@ body {
 .animate-floaty { animation: floaty 6s ease-in-out infinite; }
 @keyframes twinkle { 0%,100%{opacity:.2} 50%{opacity:1} }
 
+/* ---------- Typing flow shimmer for birthday wish text ---------- */
+.typing-flow {
+  background: linear-gradient(
+    100deg,
+    #f0e6d2 0%,
+    #f5c451 30%,
+    #f9a8d4 45%,
+    #f0e6d2 60%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: typingShimmer 3s linear infinite;
+}
+
+@keyframes typingShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 /* ---------- Performance: will-change hints for GPU-composited animations ---------- */
 .will-change-transform { will-change: transform; }
 .will-change-opacity { will-change: opacity; }

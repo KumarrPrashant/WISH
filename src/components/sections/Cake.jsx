@@ -35,30 +35,33 @@ function WishTypewriter({ text }) {
     setTimeout(() => setParticles((p) => p.filter((pt) => pt.id !== id)), life * 1000 + 80);
   };
 
+  // Tighten double line breaks to single for compact, elegant spacing
+  const compactText = text.replace(/\n\n/g, "\n");
+
   useEffect(() => {
     setShown("");
     setParticles([]);
     setTyping(true);
     let i = 0;
-    const step = Math.max(1, Math.round(text.length / 400));
+    const step = 1; // single-char reveal for smooth flowing animation
     const id = setInterval(() => {
       i += step;
-      setShown(text.slice(0, i));
-      if (i < text.length && i % 2 === 0) emit();
-      if (i >= text.length) {
+      setShown(compactText.slice(0, i));
+      if (i < compactText.length && i % 3 === 0) emit();
+      if (i >= compactText.length) {
         clearInterval(id);
         setTyping(false);
       }
-    }, 2.6); // 40% faster than previous 3.6ms
+    }, 18); // smooth single-char flow at ~55 chars/sec
     const cleanupRO = observe();
     return () => { clearInterval(id); cleanupRO && cleanupRO(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [compactText]);
 
   return (
     <div ref={wrapRef} className="relative inline-block">
       <span
-        className="font-serif-display text-xl md:text-2xl leading-[1.2] whitespace-pre-line tracking-wide"
+        className="font-serif-display text-xl md:text-2xl leading-[1.05] whitespace-pre-line tracking-wide typing-flow"
         style={{ color: "#f0e6d2", textShadow: "0 0 18px rgba(245,196,81,0.35), 0 2px 8px rgba(0,0,0,0.4)" }}
       >
         {shown}
