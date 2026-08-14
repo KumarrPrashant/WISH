@@ -11,7 +11,7 @@ function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-/* ---- Premium fast typewriter with glowing magical cursor ---- */
+/* ---- Premium typewriter: Playfair Display, tighter leading, 40% faster ---- */
 function WishTypewriter({ text }) {
   const [shown, setShown] = useState("");
   const [typing, setTyping] = useState(false);
@@ -19,15 +19,12 @@ function WishTypewriter({ text }) {
   const wrapRef = useRef(null);
   const [particles, setParticles] = useState([]);
   const pid = useRef(0);
+  const { getPos, observe } = useCursorPos(wrapRef, cursorRef);
 
   const emit = () => {
-    const wrap = wrapRef.current;
-    const cur = cursorRef.current;
-    if (!wrap || !cur) return;
-    const wr = wrap.getBoundingClientRect();
-    const cr = cur.getBoundingClientRect();
-    const x = cr.left - wr.left + cr.width / 2;
-    const y = cr.top - wr.top + cr.height / 2;
+    const pos = getPos();
+    if (!pos) return;
+    const { x, y } = pos;
     const id = pid.current++;
     const color = SPARK_COLORS[id % SPARK_COLORS.length];
     const drift = (Math.random() - 0.5) * 22;
@@ -52,16 +49,17 @@ function WishTypewriter({ text }) {
         clearInterval(id);
         setTyping(false);
       }
-    }, 3.6); // ~40% faster than original speed=6
-    return () => clearInterval(id);
+    }, 2.6); // 40% faster than previous 3.6ms
+    const cleanupRO = observe();
+    return () => { clearInterval(id); cleanupRO && cleanupRO(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
 
   return (
     <div ref={wrapRef} className="relative inline-block">
       <span
-        className="font-hand text-2xl md:text-3xl leading-[1.35] whitespace-pre-line"
-        style={{ color: "#f5edd6", textShadow: "0 0 16px rgba(245,196,81,0.45), 0 2px 8px rgba(0,0,0,0.45)" }}
+        className="font-serif-display text-xl md:text-2xl leading-[1.2] whitespace-pre-line tracking-wide"
+        style={{ color: "#f0e6d2", textShadow: "0 0 18px rgba(245,196,81,0.35), 0 2px 8px rgba(0,0,0,0.4)" }}
       >
         {shown}
         <motion.span
@@ -97,45 +95,74 @@ function WishTypewriter({ text }) {
   );
 }
 
-/* ---- Cinematic celebration: fireworks, skyshots, sparkles, particles, glowing dust ---- */
+/* ---- Cinematic celebration: fireworks, skyshots, shooting stars,
+       magical particles, glowing dust, warm golden wash ---- */
 function Celebration() {
   const fireworks = useMemo(
     () =>
-      Array.from({ length: 7 }).map((_, i) => ({
+      Array.from({ length: 9 }).map((_, i) => ({
         id: i,
-        x: rand(12, 88),
-        y: rand(15, 55),
+        x: rand(10, 90),
+        y: rand(12, 58),
         color: SPARK_COLORS[i % SPARK_COLORS.length],
-        delay: i * 0.35 + rand(0, 0.3),
-        rays: 10 + (i % 3) * 2,
-        size: 90 + (i % 3) * 30,
+        delay: i * 0.3 + rand(0, 0.25),
+        rays: 12 + (i % 3) * 2,
+        size: 100 + (i % 4) * 30,
       })),
     []
   );
 
   const skyshots = useMemo(
     () =>
-      Array.from({ length: 5 }).map((_, i) => ({
+      Array.from({ length: 7 }).map((_, i) => ({
         id: i,
-        x: rand(15, 85),
-        delay: i * 0.5 + rand(0, 0.4),
-        dur: 1.4 + (i % 2) * 0.3,
+        x: rand(12, 88),
+        delay: i * 0.4 + rand(0, 0.3),
+        dur: 1.3 + (i % 2) * 0.3,
         color: SPARK_COLORS[(i + 2) % SPARK_COLORS.length],
-        peak: `-${rand(40, 55)}vh`,
+        peak: `-${rand(38, 58)}vh`,
+      })),
+    []
+  );
+
+  const shootingStars = useMemo(
+    () =>
+      Array.from({ length: 3 }).map((_, i) => ({
+        id: i,
+        startX: rand(5, 35),
+        startY: rand(5, 25),
+        delay: 1 + i * 0.9 + rand(0, 0.3),
+        color: SPARK_COLORS[(i + 4) % SPARK_COLORS.length],
       })),
     []
   );
 
   const dust = useMemo(
     () =>
-      Array.from({ length: 40 }).map((_, i) => ({
+      Array.from({ length: 50 }).map((_, i) => ({
         id: i,
         x: rand(0, 100),
         y: rand(0, 100),
-        s: rand(1.5, 3.5),
+        s: rand(1.5, 4),
         delay: rand(0, 3),
         dur: rand(4, 8),
         color: SPARK_COLORS[i % SPARK_COLORS.length],
+      })),
+    []
+  );
+
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 28 }).map((_, i) => ({
+        id: i,
+        x: rand(20, 80),
+        y: rand(25, 75),
+        s: rand(2, 5),
+        delay: rand(0, 2),
+        dur: rand(2.5, 4.5),
+        color: SPARK_COLORS[i % SPARK_COLORS.length],
+        drift: rand(-40, 40),
+        rise: rand(30, 80),
       })),
     []
   );
@@ -148,15 +175,50 @@ function Celebration() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
     >
+      {/* warm golden wash — emotional ambient glow */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ background: "radial-gradient(circle at 50% 35%, rgba(245,196,81,0.18), rgba(139,92,246,0.08) 40%, transparent 75%)" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0.6, 0.4] }}
+        transition={{ duration: 5, times: [0, 0.15, 0.5, 1], ease: "easeOut" }}
+      />
+
       {/* glowing ambient dust drifting */}
       {dust.map((d) => (
         <motion.span
           key={`d${d.id}`}
           className="absolute rounded-full"
-          style={{ left: `${d.x}%`, top: `${d.y}%`, width: d.s, height: d.s, background: d.color, boxShadow: `0 0 8px ${d.color}` }}
+          style={{ left: `${d.x}%`, top: `${d.y}%`, width: d.s, height: d.s, background: d.color, boxShadow: `0 0 8px ${d.color}`, willChange: "transform, opacity" }}
           animate={{ opacity: [0, 0.8, 0], y: [0, -80], x: [0, rand(-30, 30)], scale: [0.5, 1.2, 0.4] }}
           transition={{ duration: d.dur, delay: d.delay, repeat: Infinity, ease: "easeInOut" }}
         />
+      ))}
+
+      {/* magical particles — rising sparks */}
+      {particles.map((p) => (
+        <motion.span
+          key={`p${p.id}`}
+          className="absolute rounded-full"
+          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.s, height: p.s, background: p.color, boxShadow: `0 0 8px ${p.color}, 0 0 3px #fff`, willChange: "transform, opacity" }}
+          initial={{ opacity: 0, scale: 0.3, y: 0, x: 0 }}
+          animate={{ opacity: [0, 1, 0], scale: [0.3, 1.2, 0.2], y: -p.rise, x: p.drift }}
+          transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: "easeOut" }}
+        />
+      ))}
+
+      {/* shooting stars streaking across the sky */}
+      {shootingStars.map((s) => (
+        <motion.div
+          key={`ss${s.id}`}
+          className="absolute"
+          style={{ left: `${s.startX}%`, top: `${s.startY}%`, willChange: "transform, opacity" }}
+          initial={{ opacity: 0, x: 0, y: 0 }}
+          animate={{ opacity: [0, 1, 0], x: [0, "35vw"], y: [0, "22vh"] }}
+          transition={{ duration: 1.1, delay: s.delay, repeat: Infinity, repeatDelay: 3.5, ease: "easeOut" }}
+        >
+          <div style={{ width: 70, height: 2, background: `linear-gradient(90deg, ${s.color}, transparent)`, borderRadius: 2, boxShadow: `0 0 10px ${s.color}` }} />
+        </motion.div>
       ))}
 
       {/* skyshots — trails rising then bursting */}
@@ -287,7 +349,7 @@ export default function Cake() {
   const [blown, setBlown] = useState(false);
   return (
     <section className="relative py-24 px-6 overflow-hidden" data-testid="cake-section">
-      {blown && <Confetti recycle={false} numberOfPieces={360} colors={["#f472b6", "#8b5cf6", "#f5c451", "#c4b5fd", "#fff"]} gravity={0.22} />}
+      {blown && <Confetti recycle={false} numberOfPieces={500} colors={["#f472b6", "#8b5cf6", "#f5c451", "#c4b5fd", "#fff", "#ffcaa4"]} gravity={0.22} />}
       <AnimatePresence>{blown && <Celebration />}</AnimatePresence>
 
       <Header emoji="🎂" title="Make a Birthday Wish" subtitle="Before blowing the candles... close your eyes and make one little wish. ✨" />
