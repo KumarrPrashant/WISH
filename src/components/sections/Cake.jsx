@@ -35,7 +35,6 @@ function WishTypewriter({ text }) {
     setTimeout(() => setParticles((p) => p.filter((pt) => pt.id !== id)), life * 1000 + 80);
   };
 
-  // Tighten double line breaks to single for compact, elegant spacing
   const compactText = text.replace(/\n\n/g, "\n");
 
   useEffect(() => {
@@ -43,7 +42,7 @@ function WishTypewriter({ text }) {
     setParticles([]);
     setTyping(true);
     let i = 0;
-    const step = 1; // single-char reveal for smooth flowing animation
+    const step = 1;
     const id = setInterval(() => {
       i += step;
       setShown(compactText.slice(0, i));
@@ -52,7 +51,7 @@ function WishTypewriter({ text }) {
         clearInterval(id);
         setTyping(false);
       }
-    }, 18); // smooth single-char flow at ~55 chars/sec
+    }, 18);
     const cleanupRO = observe();
     return () => { clearInterval(id); cleanupRO && cleanupRO(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,8 +97,10 @@ function WishTypewriter({ text }) {
   );
 }
 
-/* ---- Cinematic celebration: fireworks, skyshots, shooting stars,
-       magical particles, glowing dust, warm golden wash ---- */
+/* ---- Section-scoped celebration: fireworks, skyshots, glitters ----
+     Rendered only while the Cake section is visible via IntersectionObserver.
+     When the user leaves the section, the component unmounts and all
+     animations/particles are removed from the DOM. ---- */
 function Celebration() {
   const fireworks = useMemo(
     () =>
@@ -172,13 +173,12 @@ function Celebration() {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[80] pointer-events-none overflow-hidden"
+      className="absolute inset-0 z-[80] pointer-events-none overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.5 }}
     >
-      {/* warm golden wash — emotional ambient glow */}
       <motion.div
         className="absolute inset-0"
         style={{ background: "radial-gradient(circle at 50% 35%, rgba(245,196,81,0.18), rgba(139,92,246,0.08) 40%, transparent 75%)" }}
@@ -187,7 +187,6 @@ function Celebration() {
         transition={{ duration: 5, times: [0, 0.15, 0.5, 1], ease: "easeOut" }}
       />
 
-      {/* glowing ambient dust drifting */}
       {dust.map((d) => (
         <motion.span
           key={`d${d.id}`}
@@ -198,7 +197,6 @@ function Celebration() {
         />
       ))}
 
-      {/* magical particles — rising sparks */}
       {particles.map((p) => (
         <motion.span
           key={`p${p.id}`}
@@ -210,7 +208,6 @@ function Celebration() {
         />
       ))}
 
-      {/* shooting stars streaking across the sky */}
       {shootingStars.map((s) => (
         <motion.div
           key={`ss${s.id}`}
@@ -224,7 +221,6 @@ function Celebration() {
         </motion.div>
       ))}
 
-      {/* skyshots — trails rising then bursting */}
       {skyshots.map((s) => (
         <div key={`s${s.id}`} className="absolute bottom-0" style={{ left: `${s.x}%` }}>
           <motion.span
@@ -244,7 +240,6 @@ function Celebration() {
         </div>
       ))}
 
-      {/* firework bursts */}
       {fireworks.map((fw) => (
         <motion.div
           key={`fw${fw.id}`}
@@ -279,7 +274,6 @@ function Celebration() {
         </motion.div>
       ))}
 
-      {/* central magical sparkle bloom */}
       <motion.div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         initial={{ opacity: 0, scale: 0 }}
@@ -306,7 +300,6 @@ function Cake3D({ blown }) {
 
       {!blown && <ellipse cx="140" cy="50" rx="90" ry="40" fill="url(#halo)" />}
 
-      {/* candles */}
       {candles.map((c) => {
         const x = 88 + c * 26;
         return (
@@ -328,20 +321,15 @@ function Cake3D({ blown }) {
         );
       })}
 
-      {/* top tier */}
       <rect x="70" y="100" width="140" height="42" rx="14" fill="url(#frost1)" stroke="#f3b8d0" />
       <path d="M70 116 q14 14 24 0 q14 14 24 0 q14 14 24 0 q14 14 24 0 q14 14 24 0 v-16 H70 Z" fill="#fff" opacity="0.85" />
-      {/* mid tier */}
       <rect x="52" y="142" width="176" height="52" rx="16" fill="url(#frost2)" stroke="#e79fc0" />
       <path d="M52 160 q16 16 28 0 q16 16 28 0 q16 16 28 0 q16 16 28 0 q16 16 28 0 v-18 H52 Z" fill="#ffe3f0" opacity="0.9" />
-      {/* bottom tier */}
       <rect x="34" y="194" width="212" height="56" rx="18" fill="url(#frost3)" stroke="#c99ad8" />
       <path d="M34 212 q18 18 30 0 q18 18 30 0 q18 18 30 0 q18 18 30 0 q18 18 30 0 q18 18 30 0 v-20 H34 Z" fill="#f6d9ff" opacity="0.9" />
-      {/* sprinkles */}
       {[...Array(14)].map((_, i) => (
         <rect key={i} x={45 + (i * 15) % 190} y={205 + (i % 3) * 14} width="6" height="2.5" rx="1.2" fill={["#8b5cf6", "#ec4899", "#f5c451", "#60a5fa"][i % 4]} transform={`rotate(${(i * 40) % 90} ${48 + (i * 15) % 190} ${206 + (i % 3) * 14})`} />
       ))}
-      {/* plate */}
       <ellipse cx="140" cy="252" rx="120" ry="12" fill="#e6c6a8" />
       <ellipse cx="140" cy="249" rx="120" ry="8" fill="#f3e2c8" />
     </svg>
@@ -350,10 +338,30 @@ function Cake3D({ blown }) {
 
 export default function Cake() {
   const [blown, setBlown] = useState(false);
+  const sectionRef = useRef(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => { setInView(entries[0].isIntersecting); },
+      { threshold: 0, rootMargin: "-10% 0px -10% 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const showEffects = blown && inView;
+
   return (
-    <section className="relative py-24 px-6 overflow-hidden" data-testid="cake-section">
-      {blown && <Confetti recycle={false} numberOfPieces={500} colors={["#f472b6", "#8b5cf6", "#f5c451", "#c4b5fd", "#fff", "#ffcaa4"]} gravity={0.22} />}
-      <AnimatePresence>{blown && <Celebration />}</AnimatePresence>
+    <section ref={sectionRef} className="relative py-24 px-6 overflow-hidden" data-testid="cake-section">
+      <AnimatePresence>
+        {showEffects && (
+          <Confetti recycle={false} numberOfPieces={500} colors={["#f472b6", "#8b5cf6", "#f5c451", "#c4b5fd", "#fff", "#ffcaa4"]} gravity={0.22} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>{showEffects && <Celebration />}</AnimatePresence>
 
       <Header emoji="🎂" title="Make a Birthday Wish" subtitle="Before blowing the candles... close your eyes and make one little wish. ✨" />
 
@@ -361,7 +369,6 @@ export default function Cake() {
         <motion.div className="flex flex-col items-center relative"
           animate={{ x: blown ? -6 : 0 }} transition={{ type: "spring", stiffness: 60, damping: 16 }}>
           <div className="absolute -inset-6 rounded-full blur-3xl -z-10" style={{ background: blown ? "radial-gradient(circle,rgba(255,220,150,0.6),transparent 70%)" : "radial-gradient(circle,rgba(236,72,153,0.4),transparent 70%)" }} />
-          {/* flowers bloom on blow */}
           {blown && ["🌸", "🌺", "🌼", "🌷"].map((f, i) => (
             <motion.span key={i} className="absolute text-3xl" style={{ left: `${10 + i * 25}%`, top: `${i % 2 ? 70 : 10}%` }}
               initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1, rotate: [0, 15, -15, 0] }} transition={{ delay: 0.2 + i * 0.15, duration: 1.2, repeat: Infinity, repeatType: "reverse" }}>{f}</motion.span>
