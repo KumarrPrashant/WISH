@@ -204,6 +204,21 @@ function SecretUniverse({ onClose }) {
 /* ---- Crystal glass message window floating in the universe ---- */
 function SecretGlassWindow({ text, onClose }) {
   const cardRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  // Stop wheel/touch events from reaching Lenis (global smooth-scroll on window)
+  // so the letter's native overflow scroll handles them instead.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const stop = (e) => e.stopPropagation();
+    el.addEventListener("wheel", stop, { passive: true });
+    el.addEventListener("touchmove", stop, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", stop);
+      el.removeEventListener("touchmove", stop);
+    };
+  }, []);
 
   // Close when clicking outside the letter card
   const handleBackdropClick = (e) => {
@@ -236,8 +251,9 @@ function SecretGlassWindow({ text, onClose }) {
 
         {/* scrollable letter content area — grows downward, internal scroll only */}
         <div
+          ref={scrollRef}
           className="overflow-y-auto px-6 pb-8 md:px-10 md:pb-10 flex justify-center"
-          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin" }}
+          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", overscrollBehavior: "contain" }}
         >
           <SecretTypewriter text={text} />
         </div>
