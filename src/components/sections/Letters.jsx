@@ -1,9 +1,241 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { LETTERS, SECRET_LETTER } from "../../data";
 import { Typewriter, ParticleBurst } from "../Ambience";
 import { Header } from "./Story";
 import LetterUniverse from "./LetterUniverse";
+
+const PLANET_COLORS = ["#f9a8d4", "#c4b5fd", "#fcd6a4", "#a4d4fc", "#fcb4c4"];
+const SPARK_COLORS = ["#f5c451", "#ffffff", "#f9a8d4", "#c4b5fd"];
+
+function sRand(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+/* ---- Faster premium typewriter with synchronized sparkles ---- */
+function SecretTypewriter({ text }) {
+  const [shown, setShown] = useState("");
+  const [typing, setTyping] = useState(false);
+  const cursorRef = useRef(null);
+  const wrapRef = useRef(null);
+  const [particles, setParticles] = useState([]);
+  const pid = useRef(0);
+
+  const emitSparkle = () => {
+    const wrap = wrapRef.current;
+    const cur = cursorRef.current;
+    if (!wrap || !cur) return;
+    const wr = wrap.getBoundingClientRect();
+    const cr = cur.getBoundingClientRect();
+    const x = cr.left - wr.left + cr.width / 2;
+    const y = cr.top - wr.top + cr.height / 2;
+    const id = pid.current++;
+    const color = SPARK_COLORS[id % SPARK_COLORS.length];
+    const drift = (Math.random() - 0.5) * 24;
+    const rise = 26 + Math.random() * 42;
+    const life = 0.9 + Math.random() * 0.6;
+    const size = 2 + Math.random() * 2.2;
+    setParticles((p) => [...p.slice(-20), { id, x, y, color, drift, rise, life, size }]);
+    setTimeout(() => setParticles((p) => p.filter((pt) => pt.id !== id)), life * 1000 + 80);
+  };
+
+  useEffect(() => {
+    setShown("");
+    setParticles([]);
+    setTyping(true);
+    let i = 0;
+    const step = Math.max(1, Math.round(text.length / 250));
+    const id = setInterval(() => {
+      i += step;
+      setShown(text.slice(0, i));
+      if (i < text.length) emitSparkle();
+      if (i >= text.length) {
+        clearInterval(id);
+        setTyping(false);
+      }
+    }, 5); // faster typing than the LetterUniverse version
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
+
+  return (
+    <div ref={wrapRef} className="relative inline-block">
+      <span
+        className="font-serif-display italic text-lg md:text-xl lg:text-2xl text-[#f5edd6] leading-relaxed whitespace-pre-line tracking-wide"
+        style={{ textShadow: "0 0 18px rgba(245,196,81,0.45), 0 2px 8px rgba(0,0,0,0.65), 0 0 40px rgba(139,92,246,0.22)" }}
+      >
+        {shown}
+        <motion.span
+          ref={cursorRef}
+          className="inline-block w-[2px] h-[1.1em] align-middle ml-0.5 rounded-full"
+          style={{ background: "#f5c451", boxShadow: "0 0 8px #f5c451, 0 0 16px rgba(245,196,81,0.65), 0 0 24px rgba(245,196,81,0.3)" }}
+          animate={{ opacity: [1, 1, 0, 0] }}
+          transition={{ duration: 0.9, repeat: Infinity, times: [0, 0.45, 0.5, 1], ease: "linear" }}
+        />
+      </span>
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: typing ? 1 : 0 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        {particles.map((p) => (
+          <motion.span
+            key={p.id}
+            className="absolute rounded-full"
+            style={{ left: p.x, top: p.y, width: p.size, height: p.size, marginLeft: -p.size / 2, marginTop: -p.size / 2, background: p.color, boxShadow: `0 0 6px ${p.color}, 0 0 3px ${p.color}` }}
+            initial={{ opacity: 0, scale: 0.3, x: 0, y: 0 }}
+            animate={{ opacity: [0, 1, 0], scale: [0.3, 1.4, 0.2], x: p.drift, y: -p.rise }}
+            transition={{ duration: p.life, ease: "easeOut" }}
+          />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+/* ---- Magical full-screen universe for the Secret Letter ---- */
+function SecretUniverse({ onClose }) {
+  const stars = useRef(
+    Array.from({ length: 120 }).map((_, i) => ({ id: i, x: sRand(0, 100), y: sRand(0, 100), s: sRand(1, 3), delay: sRand(0, 4), dur: sRand(2, 5) }))
+  ).current;
+
+  const planets = useRef(
+    Array.from({ length: 5 }).map((_, i) => ({
+      id: i,
+      x: [12, 28, 64, 80, 90][i],
+      y: [22, 70, 30, 80, 14][i],
+      size: sRand(20, 38),
+      color: PLANET_COLORS[i % PLANET_COLORS.length],
+      delay: sRand(0, 2),
+      dur: sRand(10, 18),
+      drift: sRand(-30, 30),
+      ring: i % 2 === 0,
+    }))
+  ).current;
+
+  const clouds = useRef(
+    Array.from({ length: 4 }).map((_, i) => ({ id: i, y: [18, 52, 76, 40][i], x: sRand(-10, 90), w: sRand(220, 360), dur: sRand(40, 70), delay: sRand(0, 10), op: sRand(0.05, 0.12) }))
+  ).current;
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[90] overflow-hidden"
+      initial={{ opacity: 0, scale: 1.3 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.15 }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      onClick={onClose}
+    >
+      {/* deep galaxy gradient */}
+      <div className="absolute inset-0" style={{
+        background:
+          "radial-gradient(70% 60% at 30% 25%, rgba(139,92,246,0.42), transparent 60%), radial-gradient(60% 55% at 80% 30%, rgba(236,72,153,0.35), transparent 62%), radial-gradient(80% 70% at 50% 95%, rgba(109,40,217,0.5), transparent 60%), linear-gradient(160deg, #06061a 0%, #120a2e 50%, #08081f 100%)",
+      }} />
+
+      {/* nebula blobs */}
+      <motion.div className="absolute -top-32 -left-24 w-[600px] h-[600px] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, rgba(139,92,246,0.5), transparent 70%)" }}
+        animate={{ x: [0, 60, 0], y: [0, 40, 0] }} transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }} />
+      <motion.div className="absolute top-1/3 -right-40 w-[560px] h-[560px] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, rgba(236,72,153,0.4), transparent 70%)" }}
+        animate={{ x: [0, -50, 0], y: [0, 60, 0] }} transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }} />
+
+      {/* stars */}
+      {stars.map((s) => (
+        <motion.span key={s.id} className="absolute rounded-full bg-white pointer-events-none"
+          style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, boxShadow: "0 0 6px rgba(255,255,255,0.8)" }}
+          animate={{ opacity: [0.2, 1, 0.2] }} transition={{ duration: s.dur, delay: s.delay, repeat: Infinity, ease: "easeInOut" }} />
+      ))}
+
+      {/* cartoon moon */}
+      <motion.div className="absolute top-[8%] right-[12%] pointer-events-none"
+        animate={{ y: [0, -12, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}>
+        <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full"
+          style={{ background: "radial-gradient(circle at 35% 30%, #fffbe8, #f5e8b0 60%, #e8d488 100%)", boxShadow: "0 0 50px rgba(245,232,176,0.5), inset -14px -10px 30px rgba(180,150,80,0.5)" }}>
+          <span className="absolute top-[22%] left-[28%] w-3 h-3 rounded-full" style={{ background: "rgba(180,150,80,0.35)" }} />
+          <span className="absolute top-[52%] left-[58%] w-4 h-4 rounded-full" style={{ background: "rgba(180,150,80,0.3)" }} />
+          <span className="absolute top-[68%] left-[32%] w-2.5 h-2.5 rounded-full" style={{ background: "rgba(180,150,80,0.3)" }} />
+        </div>
+      </motion.div>
+
+      {/* planets */}
+      {planets.map((p) => (
+        <motion.div key={p.id} className="absolute pointer-events-none"
+          style={{ left: `${p.x}%`, top: `${p.y}%` }}
+          animate={{ y: [0, -16, 0], x: [0, p.drift, 0], rotate: [0, 8, 0] }}
+          transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}>
+          <div className="relative" style={{ width: p.size, height: p.size }}>
+            {p.ring && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{ width: p.size * 1.8, height: p.size * 0.5, border: `1.5px solid ${p.color}66`, transform: "translate(-50%,-50%) rotate(-22deg)" }} />
+            )}
+            <div className="w-full h-full rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${p.color}, ${p.color}88 70%, ${p.color}44)`, boxShadow: `0 0 18px ${p.color}55, inset -4px -3px 8px rgba(0,0,0,0.3)` }} />
+          </div>
+        </motion.div>
+      ))}
+
+      {/* soft clouds */}
+      {clouds.map((c) => (
+        <motion.div key={c.id} className="absolute pointer-events-none rounded-full blur-2xl"
+          style={{ top: `${c.y}%`, left: `${c.x}%`, width: c.w, height: c.w * 0.4, background: "rgba(196,181,253,0.5)", opacity: c.op }}
+          animate={{ x: [0, 60, 0] }} transition={{ duration: c.dur, delay: c.delay, repeat: Infinity, ease: "easeInOut" }} />
+      ))}
+
+      {/* floating particles */}
+      {Array.from({ length: 16 }).map((_, i) => {
+        const color = SPARK_COLORS[i % SPARK_COLORS.length];
+        return (
+          <motion.span key={`mp${i}`} className="absolute rounded-full pointer-events-none"
+            style={{ left: `${sRand(5, 95)}%`, top: `${sRand(5, 95)}%`, width: 3, height: 3, background: color, boxShadow: `0 0 8px ${color}` }}
+            animate={{ opacity: [0, 1, 0], y: [0, -60], scale: [0.5, 1.2, 0.5] }}
+            transition={{ duration: sRand(3, 5), delay: i * 0.3, repeat: Infinity, ease: "easeInOut" }} />
+        );
+      })}
+
+      {/* click-to-close hint */}
+      <motion.div className="absolute top-6 left-1/2 -translate-x-1/2 pointer-events-none font-body text-sm text-[#c4b5fd] tracking-wide z-[100]"
+        animate={{ opacity: [0.4, 0.9, 0.4] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+        tap anywhere to close
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ---- Crystal glass message window floating in the universe ---- */
+function SecretGlassWindow({ text }) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[95] flex items-center justify-center p-6 md:p-10 pointer-events-none"
+      initial={{ opacity: 0, scale: 0.92, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <motion.div
+        animate={{ y: [0, -14, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        className="w-full max-w-2xl"
+      >
+        <div className="crystal-glass rounded-3xl p-8 md:p-12 relative">
+          {/* title */}
+          <motion.div className="mb-6 text-center"
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}>
+            <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3"
+              style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)", boxShadow: "0 0 30px rgba(236,72,153,0.5), 0 6px 20px rgba(0,0,0,0.3)" }}>💖</div>
+            <h3 className="font-hand text-3xl md:text-4xl text-[#f5edd6]"
+              style={{ textShadow: "0 0 20px rgba(245,196,81,0.5), 0 2px 10px rgba(0,0,0,0.5)" }}>A Little Secret</h3>
+          </motion.div>
+
+          {/* crystal glass message with fast typewriter */}
+          <div className="flex justify-center">
+            <SecretTypewriter text={text} />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 /* Storybook fairytale paper used by letters + secret letter */
 function StorybookPaper({ children, title, emoji, color, wide = false }) {
@@ -87,17 +319,17 @@ export function SecretLetter() {
               <p className="font-hand text-2xl text-[#f5c451] gold-glow">tap to unseal</p>
             </div>
           </motion.button>
-        ) : (
-          <motion.div className="relative w-full flex justify-center" initial={{ opacity: 0, scale: 0.7, y: 60, rotate: -8 }} animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }} transition={{ type: "spring", stiffness: 65, damping: 15 }}>
-            <ParticleBurst count={18} />
-            <StorybookPaper title="A Little Secret" emoji="💖" color="#f9a8d4" wide>
-              <p className="font-body text-[#3a2a15] whitespace-pre-line leading-relaxed">
-                <Typewriter text={SECRET_LETTER} speed={6} />
-              </p>
-            </StorybookPaper>
-          </motion.div>
-        )}
+        ) : null}
       </div>
+
+      <AnimatePresence>
+        {revealed && (
+          <div className="fixed inset-0 z-[90]">
+            <SecretUniverse onClose={() => setRevealed(false)} />
+            <SecretGlassWindow text={SECRET_LETTER} />
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
