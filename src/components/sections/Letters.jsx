@@ -125,7 +125,6 @@ function SecretUniverse({ onClose }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.15 }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      onClick={onClose}
     >
       {/* deep galaxy gradient */}
       <div className="absolute inset-0" style={{
@@ -203,36 +202,46 @@ function SecretUniverse({ onClose }) {
 }
 
 /* ---- Crystal glass message window floating in the universe ---- */
-function SecretGlassWindow({ text }) {
+function SecretGlassWindow({ text, onClose }) {
+  const cardRef = useRef(null);
+
+  // Close when clicking outside the letter card
+  const handleBackdropClick = (e) => {
+    if (cardRef.current && !cardRef.current.contains(e.target)) {
+      onClose();
+    }
+  };
+
   return (
     <motion.div
-      className="fixed inset-0 z-[95] flex items-center justify-center p-6 md:p-10 pointer-events-none"
+      className="fixed inset-0 z-[95] flex items-start justify-center pt-[8vh] pb-[4vh] px-4 md:px-6"
       initial={{ opacity: 0, scale: 0.92, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      onClick={handleBackdropClick}
     >
-      <motion.div
-        animate={{ y: [0, -14, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="w-full max-w-2xl"
+      <div
+        ref={cardRef}
+        className="w-full max-w-2xl crystal-glass rounded-3xl relative flex flex-col"
+        style={{ maxHeight: "84vh" }}
       >
-        <div className="crystal-glass rounded-3xl p-8 md:p-12 relative">
-          {/* title */}
-          <motion.div className="mb-6 text-center"
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}>
-            <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3"
-              style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)", boxShadow: "0 0 30px rgba(236,72,153,0.5), 0 6px 20px rgba(0,0,0,0.3)" }}>💖</div>
-            <h3 className="font-hand text-3xl md:text-4xl text-[#f5edd6]"
-              style={{ textShadow: "0 0 20px rgba(245,196,81,0.5), 0 2px 10px rgba(0,0,0,0.5)" }}>A Little Secret</h3>
-          </motion.div>
-
-          {/* crystal glass message with fast typewriter */}
-          <div className="flex justify-center">
-            <SecretTypewriter text={text} />
-          </div>
+        {/* title — fixed at top, never moves */}
+        <div className="text-center pt-6 pb-4 md:pt-8 md:pb-5 flex-shrink-0">
+          <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-3"
+            style={{ background: "linear-gradient(135deg, #ec4899, #8b5cf6)", boxShadow: "0 0 30px rgba(236,72,153,0.5), 0 6px 20px rgba(0,0,0,0.3)" }}>💖</div>
+          <h3 className="font-hand text-3xl md:text-4xl text-[#f5edd6]"
+            style={{ textShadow: "0 0 20px rgba(245,196,81,0.5), 0 2px 10px rgba(0,0,0,0.5)" }}>A Little Secret</h3>
         </div>
-      </motion.div>
+
+        {/* scrollable letter content area — grows downward, internal scroll only */}
+        <div
+          className="overflow-y-auto px-6 pb-8 md:px-10 md:pb-10 flex justify-center"
+          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin" }}
+        >
+          <SecretTypewriter text={text} />
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -306,6 +315,15 @@ export default function Letters() {
 
 export function SecretLetter() {
   const [revealed, setRevealed] = useState(false);
+
+  // Lock body scroll while the Secret Letter universe is open
+  useEffect(() => {
+    if (!revealed) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [revealed]);
+
   return (
     <section className="relative py-24 px-6" data-testid="secret-section">
       <Header emoji="💖" title="Secret Letter" subtitle="Only open when you're ready... ❤️" />
@@ -326,7 +344,7 @@ export function SecretLetter() {
         {revealed && (
           <div className="fixed inset-0 z-[90]">
             <SecretUniverse onClose={() => setRevealed(false)} />
-            <SecretGlassWindow text={SECRET_LETTER} />
+            <SecretGlassWindow text={SECRET_LETTER} onClose={() => setRevealed(false)} />
           </div>
         )}
       </AnimatePresence>
