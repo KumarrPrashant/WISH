@@ -320,9 +320,26 @@ function Universe({ onClose }) {
 
 /* ---------------- Floating letter text — no card, blends with universe ---------------- */
 function FloatingLetter({ letter }) {
+  const scrollRef = useRef(null);
+
+  // Stop wheel/touch/click from reaching Lenis + Universe close handler
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const stop = (e) => e.stopPropagation();
+    el.addEventListener("wheel", stop, { passive: true });
+    el.addEventListener("touchmove", stop, { passive: true });
+    el.addEventListener("click", stop, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", stop);
+      el.removeEventListener("touchmove", stop);
+      el.removeEventListener("click", stop);
+    };
+  }, []);
+
   return (
     <motion.div
-      className="fixed inset-0 z-[95] flex items-center justify-center p-6 md:p-10 pointer-events-none"
+      className="fixed inset-0 z-[95] flex items-start justify-center pt-[8vh] pb-[4vh] px-4 md:px-6 pointer-events-none"
       initial={{ opacity: 0, scale: 0.92, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -331,11 +348,12 @@ function FloatingLetter({ letter }) {
       <motion.div
         animate={{ y: [0, -14, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="max-w-2xl text-center"
+        className="max-w-2xl w-full flex flex-col items-center pointer-events-auto"
+        style={{ maxHeight: "84vh" }}
       >
-        {/* emoji + title */}
+        {/* emoji + title — fixed at top, never moves */}
         <motion.div
-          className="mb-6"
+          className="mb-6 flex-shrink-0 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
@@ -350,8 +368,12 @@ function FloatingLetter({ letter }) {
           </h3>
         </motion.div>
 
-        {/* floating message — no card, just glowing text */}
-        <div className="flex justify-center">
+        {/* scrollable letter content — grows downward, internal scroll only */}
+        <div
+          ref={scrollRef}
+          className="overflow-y-auto flex justify-center w-full"
+          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", overscrollBehavior: "contain" }}
+        >
           <UniverseTypewriter text={letter.body} />
         </div>
       </motion.div>

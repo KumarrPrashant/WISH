@@ -309,6 +309,15 @@ function LuxEnvelope({ letter }) {
 export default function Letters() {
   const [open, setOpen] = useState(null);
   const letter = LETTERS.find((l) => l.id === open);
+
+  // Lock body scroll while a mood letter universe is open
+  useEffect(() => {
+    if (!letter) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [letter]);
+
   return (
     <section className="relative py-24 px-6" data-testid="letters-section">
       <Header emoji="💌" title="Letters For Every Mood" subtitle="No matter what you're feeling, there's always a little letter waiting for you. 🤍" />
