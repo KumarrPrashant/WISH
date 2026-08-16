@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MEMORY_VIDEOS } from "../../data-videos";
 
 const SPARK_COLORS = ["#f5c451", "#ffffff", "#f9a8d4", "#c4b5fd"];
+const FLOWER_EMOJIS = ["🌸", "🌺", "🌷", "🌼", "💮", "🏵️"];
 
 function rand(min, max) {
   return Math.random() * (max - min) + min;
@@ -105,39 +106,131 @@ function MessageDecor() {
   );
 }
 
-/* ---- Video player: preserves native aspect ratio, no forced container ratio ---- */
-function VideoPlayer({ video, index, total, onEnded }) {
-  const videoRef = useRef(null);
+/* ---- Video player: preserves native aspect ratio, no native controls, auto-replay ---- */
+function VideoPlayer({ video, videoRef, onEnded }) {
+  const containerRef = useRef(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
 
+  // Autoplay on mount / src change
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     el.play().catch(() => {});
-  }, [video.src]);
+  }, [video.src, videoRef]);
+
+  // Measure the video's intrinsic aspect ratio once metadata is available,
+  // then size the <video> to fit within its container using object-contain math.
+  const onLoadedMetadata = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    setSize({ w: el.videoWidth, h: el.videoHeight });
+  };
+
+  // Re-measure container on resize so the contain-fit stays correct
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      setSize((s) => ({ ...s }));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Compute the contain-fit dimensions for the video element
+  const computeVideoStyle = () => {
+    const container = containerRef.current;
+    if (!container || size.w === 0 || size.h === 0) {
+      return { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0a0a1f" };
+    }
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const vRatio = size.w / size.h;
+    const cRatio = cw / ch;
+    let w, h;
+    if (vRatio > cRatio) {
+      w = cw;
+      h = cw / vRatio;
+    } else {
+      h = ch;
+      w = ch * vRatio;
+    }
+    return { width: w, height: h, objectFit: "contain", background: "#0a0a1f" };
+  };
 
   return (
     <motion.div
       key={video.src}
-      className="flex flex-col items-center w-full"
+      className="flex flex-col items-center w-full h-full"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.02 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="relative rounded-2xl overflow-hidden glass glass-gold">
+      <div ref={containerRef} className="relative rounded-2xl overflow-hidden glass glass-gold w-full h-full flex items-center justify-center">
         <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent, rgba(245,196,81,0.6), rgba(244,114,182,0.5), transparent)" }} />
         <video
           ref={videoRef}
           src={video.src}
-          controls
           playsInline
           preload="auto"
+          autoPlay
+          onLoadedMetadata={onLoadedMetadata}
           onEnded={onEnded}
           className="block"
-          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0a0a1f" }}
+          style={computeVideoStyle()}
         />
       </div>
     </motion.div>
+  );
+}
+
+/* ---- Lightweight flower cursor trail (desktop only, capped particle count) ---- */
+function FlowerTrail() {
+  const [flowers, setFlowers] = useState([]);
+  const fid = useRef(0);
+  const lastEmit = useRef(0);
+
+  useEffect(() => {
+    // Skip on touch devices
+    if (window.matchMedia("(hover: none)").matches) return;
+
+    const onMove = (e) => {
+      const now = performance.now();
+      if (now - lastEmit.current < 70) return; // throttle
+      lastEmit.current = now;
+
+      const id = fid.current++;
+      const emoji = FLOWER_EMOJIS[id % FLOWER_EMOJIS.length];
+      const drift = (Math.random() - 0.5) * 50;
+      const rise = 40 + Math.random() * 50;
+      const rot = (Math.random() - 0.5) * 90;
+      const sz = 14 + Math.random() * 10;
+      const life = 1.4 + Math.random() * 0.6;
+
+      setFlowers((prev) => [...prev.slice(-18), { id, x: e.clientX, y: e.clientY, emoji, drift, rise, rot, sz, life }]);
+      setTimeout(() => setFlowers((prev) => prev.filter((f) => f.id !== id)), life * 1000 + 100);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[70]">
+      {flowers.map((f) => (
+        <motion.span
+          key={f.id}
+          className="absolute"
+          style={{ left: f.x, top: f.y, fontSize: f.sz, marginLeft: -f.sz / 2, marginTop: -f.sz / 2 }}
+          initial={{ opacity: 0, scale: 0.3, x: 0, y: 0, rotate: 0 }}
+          animate={{ opacity: [0, 1, 0], scale: [0.3, 1, 0.4], x: f.drift, y: -f.rise, rotate: f.rot }}
+          transition={{ duration: f.life, ease: "easeOut" }}
+        >
+          {f.emoji}
+        </motion.span>
+      ))}
+    </div>
   );
 }
 
@@ -149,6 +242,7 @@ export default function MemoryExperience({ onClose, audioRef }) {
   const musicPausedRef = useRef(false);
   const musicTimeRef = useRef(0);
   const musicVolumeRef = useRef(0);
+  const videoRef = useRef(null);
 
   // Pause website music on entry, preserve position + volume
   useEffect(() => {
@@ -234,6 +328,8 @@ export default function MemoryExperience({ onClose, audioRef }) {
     >
       <MemoryUniverse />
 
+      <FlowerTrail />
+
       {/* Back button */}
       <motion.button
         onClick={onClose}
@@ -267,9 +363,13 @@ export default function MemoryExperience({ onClose, audioRef }) {
             <VideoPlayer
               key={MEMORY_VIDEOS[index].src}
               video={MEMORY_VIDEOS[index]}
-              index={index}
-              total={MEMORY_VIDEOS.length}
-              onEnded={(e) => { e.currentTarget.currentTime = 0; }}
+              videoRef={videoRef}
+              onEnded={() => {
+                const el = videoRef.current;
+                if (el) {
+                  setTimeout(() => { el.currentTime = 0; el.play().catch(() => {}); }, 2000);
+                }
+              }}
             />
           </AnimatePresence>
         </div>
