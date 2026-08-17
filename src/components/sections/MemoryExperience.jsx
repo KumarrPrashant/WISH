@@ -106,85 +106,6 @@ function MessageDecor() {
   );
 }
 
-/* ---- Video player: preserves native aspect ratio, no native controls, auto-replay ---- */
-function VideoPlayer({ video, videoRef, onEnded }) {
-  const containerRef = useRef(null);
-  const [size, setSize] = useState({ w: 0, h: 0 });
-
-  // Autoplay on mount / src change
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    el.play().catch(() => {});
-  }, [video.src, videoRef]);
-
-  // Measure the video's intrinsic aspect ratio once metadata is available,
-  // then size the <video> to fit within its container using object-contain math.
-  const onLoadedMetadata = () => {
-    const el = videoRef.current;
-    if (!el) return;
-    setSize({ w: el.videoWidth, h: el.videoHeight });
-  };
-
-  // Re-measure container on resize so the contain-fit stays correct
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      setSize((s) => ({ ...s }));
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Compute the contain-fit dimensions for the video element
-  const computeVideoStyle = () => {
-    const container = containerRef.current;
-    if (!container || size.w === 0 || size.h === 0) {
-      return { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0a0a1f" };
-    }
-    const cw = container.clientWidth;
-    const ch = container.clientHeight;
-    const vRatio = size.w / size.h;
-    const cRatio = cw / ch;
-    let w, h;
-    if (vRatio > cRatio) {
-      w = cw;
-      h = cw / vRatio;
-    } else {
-      h = ch;
-      w = ch * vRatio;
-    }
-    return { width: w, height: h, objectFit: "contain", background: "#0a0a1f" };
-  };
-
-  return (
-    <motion.div
-      key={video.src}
-      className="flex flex-col items-center w-full h-full"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.02 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div ref={containerRef} className="relative rounded-2xl overflow-hidden glass glass-gold w-full h-full flex items-center justify-center">
-        <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent, rgba(245,196,81,0.6), rgba(244,114,182,0.5), transparent)" }} />
-        <video
-          ref={videoRef}
-          src={video.src}
-          playsInline
-          preload="auto"
-          autoPlay
-          onLoadedMetadata={onLoadedMetadata}
-          onEnded={onEnded}
-          className="block"
-          style={computeVideoStyle()}
-        />
-      </div>
-    </motion.div>
-  );
-}
-
 /* ---- Lightweight flower cursor trail (desktop only, capped particle count) ---- */
 function FlowerTrail() {
   const [flowers, setFlowers] = useState([]);
@@ -192,12 +113,11 @@ function FlowerTrail() {
   const lastEmit = useRef(0);
 
   useEffect(() => {
-    // Skip on touch devices
     if (window.matchMedia("(hover: none)").matches) return;
 
     const onMove = (e) => {
       const now = performance.now();
-      if (now - lastEmit.current < 70) return; // throttle
+      if (now - lastEmit.current < 70) return;
       lastEmit.current = now;
 
       const id = fid.current++;
@@ -231,6 +151,52 @@ function FlowerTrail() {
         </motion.span>
       ))}
     </div>
+  );
+}
+
+/* ---- Video player: natural aspect ratio, no controls, auto-replay ----
+   Videos 1-9 use object-contain so the browser sizes them naturally.
+   Video 10 gets a scale-down to ensure the full frame is visible. */
+function VideoPlayer({ video, index, videoRef, onEnded }) {
+  const isFirst = index === 0;
+  const isTenth = index === MEMORY_VIDEOS.length - 1;
+
+  // Autoplay on src change — the parent controls mounting so this is the new video
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.play().catch(() => {});
+  }, [video.src, videoRef]);
+
+  // Videos 1-9: natural contain sizing. Video 10: force maxHeight slightly smaller
+  // so the full frame stays visible without any cropping from the container.
+  const videoStyle = isTenth
+    ? { maxWidth: "100%", maxHeight: "88%", objectFit: "contain", background: "#0a0a1f", transform: "scale(0.92)" }
+    : { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", background: "#0a0a1f" };
+
+  return (
+    <motion.div
+      key={video.src}
+      className="flex flex-col items-center justify-center w-full h-full"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.02 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="relative rounded-2xl overflow-hidden glass glass-gold flex items-center justify-center" style={{ maxHeight: "100%" }}>
+        <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(90deg, transparent, rgba(245,196,81,0.6), rgba(244,114,182,0.5), transparent)" }} />
+        <video
+          ref={videoRef}
+          src={video.src}
+          playsInline
+          preload="auto"
+          autoPlay
+          onEnded={onEnded}
+          className="block"
+          style={videoStyle}
+        />
+      </div>
+    </motion.div>
   );
 }
 
@@ -271,23 +237,78 @@ export default function MemoryExperience({ onClose, audioRef }) {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  const goNext = useCallback(() => {
-    setIndex((i) => {
-      if (i + 1 >= MEMORY_VIDEOS.length) return 0;
-      return i + 1;
-    });
+  // Fully stop + cleanup the current video before switching
+  const stopCurrentVideo = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.pause();
+    el.currentTime = 0;
+    el.muted = false;
+    // Remove src to halt any remaining audio decode, then re-set (the new src
+    // is applied by the remounted VideoPlayer via key change)
+    el.removeAttribute("src");
+    el.load();
   }, []);
 
-  // Keyboard navigation
+  const goNext = useCallback(() => {
+    stopCurrentVideo();
+    setIndex((i) => (i + 1 >= MEMORY_VIDEOS.length ? 0 : i + 1));
+  }, [stopCurrentVideo]);
+
+  const goPrev = useCallback(() => {
+    stopCurrentVideo();
+    setIndex((i) => (i - 1 < 0 ? 0 : i - 1));
+  }, [stopCurrentVideo]);
+
+  const isFirst = index === 0;
+  const isLast = index === MEMORY_VIDEOS.length - 1;
+
+  // Keyboard controls: Space=play/pause, Arrows=seek, Up/Down=volume, M=mute, Escape=close
   useEffect(() => {
     if (!introDone) return;
     const onKey = (e) => {
-      if (e.key === "ArrowRight") goNext();
-      else if (e.key === "Escape") onClose();
+      const el = videoRef.current;
+      // Prevent page scroll for keys we handle
+      if ([" ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key === " ") {
+        if (!el) return;
+        if (el.paused) el.play().catch(() => {});
+        else el.pause();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        if (!el) return;
+        el.currentTime = Math.min(el.currentTime + 5, el.duration || 0);
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        if (!el) return;
+        el.currentTime = Math.max(el.currentTime - 5, 0);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        if (!el) return;
+        el.volume = Math.min(el.volume + 0.1, 1);
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        if (!el) return;
+        el.volume = Math.max(el.volume - 0.1, 0);
+        return;
+      }
+      if (e.key === "m" || e.key === "M") {
+        if (!el) return;
+        el.muted = !el.muted;
+        return;
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [introDone, goNext, onClose]);
+  }, [introDone, onClose]);
 
   // Touch swipe
   const onTouchStart = (e) => {
@@ -296,7 +317,10 @@ export default function MemoryExperience({ onClose, audioRef }) {
   const onTouchEnd = (e) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (dx < -60) goNext();
+    if (Math.abs(dx) > 60) {
+      if (dx < 0) goNext();
+      else if (!isFirst) goPrev();
+    }
     touchStartX.current = null;
   };
 
@@ -312,8 +336,6 @@ export default function MemoryExperience({ onClose, audioRef }) {
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
   }, [index, introDone]);
-
-  const isLast = index === MEMORY_VIDEOS.length - 1;
 
   return (
     <motion.div
@@ -363,6 +385,7 @@ export default function MemoryExperience({ onClose, audioRef }) {
             <VideoPlayer
               key={MEMORY_VIDEOS[index].src}
               video={MEMORY_VIDEOS[index]}
+              index={index}
               videoRef={videoRef}
               onEnded={() => {
                 const el = videoRef.current;
@@ -374,7 +397,7 @@ export default function MemoryExperience({ onClose, audioRef }) {
           </AnimatePresence>
         </div>
 
-        {/* RIGHT: birthday message + next button (~38%) */}
+        {/* RIGHT: birthday message + navigation buttons (~38%) */}
         {introDone && (
           <motion.div
             className="relative w-full md:w-[35%] flex flex-col items-center text-center px-4"
@@ -408,20 +431,37 @@ export default function MemoryExperience({ onClose, audioRef }) {
               Ma'am, yeh kuch cutie kiddo ki cute videos banayi hain maine to make your birthday little more special. Hope you will like them. ♡
             </motion.p>
 
-            {/* Next / Replay button */}
-            <motion.button
-              onClick={goNext}
-              data-testid="next-video"
-              whileHover={{ scale: 1.05, boxShadow: "0 16px 50px rgba(139,92,246,0.5), 0 0 36px rgba(245,196,81,0.3)" }}
-              whileTap={{ scale: 0.95 }}
-              className="relative mt-7 inline-flex items-center gap-2 px-8 py-4 rounded-2xl glass glass-gold font-body text-base text-[#f5edd6] tracking-wide"
-              animate={{ boxShadow: ["0 10px 36px rgba(139,92,246,0.2), 0 0 26px rgba(245,196,81,0.12)", "0 10px 36px rgba(139,92,246,0.38), 0 0 36px rgba(245,196,81,0.22)", "0 10px 36px rgba(139,92,246,0.2), 0 0 26px rgba(245,196,81,0.12)"] }}
-              transition={{ boxShadow: { duration: 3, repeat: Infinity, ease: "easeInOut" } }}
-            >
-              <span className="text-base">✦</span>
-              {isLast ? "Replay Memories ♡" : "Next Video"}
-              <motion.span animate={{ x: [0, 5, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>→</motion.span>
-            </motion.button>
+            {/* Previous + Next buttons */}
+            <div className="flex items-center gap-4 mt-7">
+              {/* Previous — disabled on video 1 */}
+              <motion.button
+                onClick={goPrev}
+                data-testid="prev-video"
+                whileHover={isFirst ? {} : { scale: 1.05 }}
+                whileTap={isFirst ? {} : { scale: 0.95 }}
+                className="relative inline-flex items-center gap-2 px-6 py-4 rounded-2xl glass font-body text-base text-[#f5edd6] tracking-wide"
+                style={isFirst ? { opacity: 0.3, cursor: "not-allowed", pointerEvents: "none" } : {}}
+                aria-label="Previous video"
+              >
+                <motion.span animate={{ x: [0, -4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>←</motion.span>
+                Previous
+              </motion.button>
+
+              {/* Next / Replay */}
+              <motion.button
+                onClick={goNext}
+                data-testid="next-video"
+                whileHover={{ scale: 1.05, boxShadow: "0 16px 50px rgba(139,92,246,0.5), 0 0 36px rgba(245,196,81,0.3)" }}
+                whileTap={{ scale: 0.95 }}
+                className="relative inline-flex items-center gap-2 px-8 py-4 rounded-2xl glass glass-gold font-body text-base text-[#f5edd6] tracking-wide"
+                animate={{ boxShadow: ["0 10px 36px rgba(139,92,246,0.2), 0 0 26px rgba(245,196,81,0.12)", "0 10px 36px rgba(139,92,246,0.38), 0 0 36px rgba(245,196,81,0.22)", "0 10px 36px rgba(139,92,246,0.2), 0 0 26px rgba(245,196,81,0.12)"] }}
+                transition={{ boxShadow: { duration: 3, repeat: Infinity, ease: "easeInOut" } }}
+              >
+                <span className="text-base">✦</span>
+                {isLast ? "Replay Memories ♡" : "Next Video"}
+                <motion.span animate={{ x: [0, 5, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>→</motion.span>
+              </motion.button>
+            </div>
 
             {/* mobile swipe hint */}
             <motion.p
@@ -430,7 +470,7 @@ export default function MemoryExperience({ onClose, audioRef }) {
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
-              swipe ← to browse
+              swipe ← → to browse
             </motion.p>
           </motion.div>
         )}
